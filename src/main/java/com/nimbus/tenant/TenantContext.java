@@ -1,0 +1,25 @@
+package com.nimbus.tenant;
+
+import java.util.UUID;
+
+/**
+ * Utility class to hold the tenant identifier for the current request thread.
+ */
+public final class TenantContext {
+
+    private static final ThreadLocal<UUID> CURRENT_TENANT = new ThreadLocal<>();
+
+    private TenantContext() {}
+
+    public static void setTenantId(UUID tenantId) {
+        CURRENT_TENANT.set(tenantId);
+    }
+
+    public static UUID getTenantId() {
+        return CURRENT_TENANT.get();
+    }
+
+    public static void clear() {
+        CURRENT_TENANT.remove();
+    }
+}
