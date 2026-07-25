@@ -1,15 +1,18 @@
 package com.nimbus.workspace;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "workspace_memberships")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class WorkspaceMembership {
     @Id
     private UUID id;
@@ -28,4 +31,10 @@ public class WorkspaceMembership {
 
     @Column(name = "joined_at", nullable = false, updatable = false)
     private LocalDateTime joinedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if(id == null) id = UUID.randomUUID();
+        joinedAt = LocalDateTime.now();
+    }
 }
