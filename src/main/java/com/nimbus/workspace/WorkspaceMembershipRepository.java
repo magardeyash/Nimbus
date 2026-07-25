@@ -9,6 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface WorkspaceMembershipRepository extends JpaRepository<WorkspaceMembership, UUID> {
-    Optional<WorkspaceMembership> findByIdWorkspaceIdAndUserId(UUID workspaceId, UUID userId);
+    Optional<WorkspaceMembership> findByWorkspaceIdAndUserId(UUID workspaceId, UUID userId);
     List<WorkspaceMembership> findAllByUserId(UUID userId);
 }
