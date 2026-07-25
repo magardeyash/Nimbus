@@ -17,12 +17,14 @@ public class UserPrincipal implements UserDetails {
     private final String email;
     private final String passwordHash;
     private final boolean enabled;
+    private final Collection<? extends GrantedAuthority> authorities;
 
-    private UserPrincipal(UUID userId, String email, String passwordHash, boolean enabled) {
+    public UserPrincipal(UUID userId, String email, String passwordHash, boolean enabled, Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.enabled = enabled;
+        this.authorities = authorities;
     }
 
     public static UserPrincipal from(User user) {
@@ -30,7 +32,8 @@ public class UserPrincipal implements UserDetails {
                 user.getId(),
                 user.getEmail(),
                 user.getPasswordHash(),
-                user.isEnabled()
+                user.isEnabled(),
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
     }
 
@@ -62,7 +65,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return authorities;
     }
 
     public UUID getUserId() {
