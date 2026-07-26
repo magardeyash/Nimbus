@@ -63,6 +63,9 @@ class SecurityAndRbacIntegrationTest {
     private UUID workspaceAId;
     private UUID workspaceBId;
 
+    private Company companyA;
+    private Company companyB;
+
     private String tokenA;
     private String tokenB;
 
@@ -70,19 +73,18 @@ class SecurityAndRbacIntegrationTest {
     void setUp() {
         workspaceMembershipRepository.deleteAll();
         workspaceRepository.deleteAll();
-        roleRepository.deleteAll();
-        permissionRepository.deleteAll();
         userRepository.deleteAll();
         companyRepository.deleteAll();
 
         // 1. Seed global Permissions
-        Permission readPermission = Permission.builder().code("task:read").description("Read tasks").build();
-        Permission createPermission = Permission.builder().code("task:create").description("Create tasks").build();
-        permissionRepository.saveAll(List.of(readPermission, createPermission));
+        Permission readPermission = permissionRepository.findById("task:read")
+                .orElseGet(() -> permissionRepository.save(Permission.builder().code("task:read").description("Read tasks").build()));
+        Permission createPermission = permissionRepository.findById("task:create")
+                .orElseGet(() -> permissionRepository.save(Permission.builder().code("task:create").description("Create tasks").build()));
 
         // 2. Seed Companies (Tenants)
-        Company companyA = Company.builder().id(UUID.randomUUID()).name("Company A").slug("company-a").build();
-        Company companyB = Company.builder().id(UUID.randomUUID()).name("Company B").slug("company-b").build();
+        companyA = Company.builder().id(UUID.randomUUID()).name("Company A").slug("company-a").build();
+        companyB = Company.builder().id(UUID.randomUUID()).name("Company B").slug("company-b").build();
         companyRepository.saveAll(List.of(companyA, companyB));
 
         // 3. Seed Users
@@ -165,7 +167,7 @@ class SecurityAndRbacIntegrationTest {
         mockMvc.perform(get("/api/v1/workspaces/" + workspaceAId + "/test-read")
                         .header("Authorization", "Bearer " + tokenA))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Read Success. Tenant: " + TenantContext.getTenantId())); // Verification output
+                .andExpect(content().string("Read Success. Tenant: " + companyA.getId())); // Verification output
 
         // Verify that TenantContext is cleared after the request finishes
         assertThat(TenantContext.getTenantId()).isNull();
@@ -185,7 +187,7 @@ class SecurityAndRbacIntegrationTest {
         mockMvc.perform(post("/api/v1/workspaces/" + workspaceBId + "/test-write")
                         .header("Authorization", "Bearer " + tokenB))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Write Success. Tenant: " + TenantContext.getTenantId()));
+                .andExpect(content().string("Write Success. Tenant: " + companyB.getId()));
 
         assertThat(TenantContext.getTenantId()).isNull();
     }

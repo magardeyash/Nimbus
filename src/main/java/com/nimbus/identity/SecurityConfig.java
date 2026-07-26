@@ -64,6 +64,13 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + authException.getMessage() + "\"}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                                         "/api/v1/auth/**",
                                         "/swagger-ui/**",

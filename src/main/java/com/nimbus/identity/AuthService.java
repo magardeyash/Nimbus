@@ -44,7 +44,9 @@ public class AuthService {
     @Transactional
     public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new BadCredentialsException("Email is already registered");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Email is already registered"
+            );
         }
 
         User user = User.builder()
@@ -72,7 +74,7 @@ public class AuthService {
         return issueTokenPair(user);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = BadCredentialsException.class)
     public AuthDtos.AuthResponse refresh(AuthDtos.RefreshRequest request) {
         String tokenHash = hashToken(request.refreshToken());
 

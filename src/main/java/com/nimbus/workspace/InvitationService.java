@@ -21,25 +21,17 @@ public class InvitationService {
     private final WorkspaceMembershipRepository workspaceMembershipRepository;
     private final RoleRepository roleRepository;
 
-    /**
-     * Generates a pending invitation for a user by email to join a workspace with a role.
-     * Returns the raw invitation token (to be sent via email link).
-     */
     @Transactional
     public String inviteUser(UUID workspaceId, String email, UUID roleId, UUID tenantId) {
-        // Assert the target workspace exists
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
 
-        // Assert the role exists (either global or tenant-scoped)
         roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found"));
 
-        // Generate raw token
         String rawToken = UUID.randomUUID().toString();
         String tokenHash = hashToken(rawToken);
 
-        // Invitations expire in 48 hours
         Invitation invitation = Invitation.builder()
                 .tenantId(tenantId)
                 .workspaceId(workspaceId)
@@ -55,10 +47,6 @@ public class InvitationService {
         return rawToken;
     }
 
-    /**
-     * Accepts a raw invitation token, marks the invitation ACCEPTED,
-     * and registers the user as a workspace member with the designated role.
-     */
     @Transactional
     public void acceptInvitation(String rawToken, UUID inviteeUserId) {
         String tokenHash = hashToken(rawToken);
@@ -76,11 +64,9 @@ public class InvitationService {
             throw new BadCredentialsException("Invitation is no longer pending");
         }
 
-        // Accept invitation
         invitation.setStatus("ACCEPTED");
         invitationRepository.save(invitation);
 
-        // Register the workspace membership
         WorkspaceMembership membership = WorkspaceMembership.builder()
                 .tenantId(invitation.getTenantId())
                 .workspaceId(invitation.getWorkspaceId())
@@ -91,9 +77,6 @@ public class InvitationService {
         workspaceMembershipRepository.save(membership);
     }
 
-    /**
-     * Helper to compute SHA-256 hash of raw token strings.
-     */
     private String hashToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
